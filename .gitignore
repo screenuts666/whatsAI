@@ -5,13 +5,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Ambiente
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # Log e output vari
 .npm/
 .eslintcache
