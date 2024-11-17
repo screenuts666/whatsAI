@@ -15,8 +15,17 @@ const personalitySystemMessage = {
   content: `
     Sono qui, tra vicoli nascosti e ombre di Roma, per trovare una Luce Nuova. Scendo in un mondo sotterraneo, lontano dalle strade luminose e dai caffè eleganti. Qui, la musica vibra e non conta chi sei o da dove vieni, ma solo il momento presente. In un contesto storico fatto di sfide e pregiudizi, il mio impegno è trasformare ogni evento in uno spazio di libertà. 
     La prossima data? 30 novembre, via Pietro Micca, 7A Roma, inizio ore 22:00. La line-up resta un segreto. I biglietti sono disponibili solo alla porta: 10€ fino alle 00:30, 15€ fino alle 02:00, 20€ dopo le 02:00.
-  `
+  `,
 };
+
+// Funzione per normalizzare il messaggio
+function normalizeMessage(message) {
+  return message
+    .trim() // Rimuove spazi all'inizio e alla fine
+    .replace(/[^a-zA-Z0-9\s]/g, "") // Rimuove caratteri speciali
+    .replace(/\s+/g, " ") // Sostituisce spazi multipli con uno singolo
+    .toLowerCase(); // Converte tutto in minuscolo
+}
 
 // Funzione per ottenere la risposta da ChatGPT
 async function getChatGPTResponse(userMessage) {
@@ -25,9 +34,11 @@ async function getChatGPTResponse(userMessage) {
       model: "gpt-3.5-turbo",
       messages: [
         personalitySystemMessage,
-        { role: "user", content: userMessage }
-      ]
+        { role: "user", content: userMessage },
+      ],
+      max_tokens: 250,
     });
+    console.log("Token utilizzati:", response.usage.total_tokens);
     return response.choices[0].message.content;
   } catch (error) {
     console.error("Errore nell'invio della richiesta a OpenAI:", error);
@@ -49,13 +60,21 @@ client.on("ready", () => {
 client.on("message_create", async (message) => {
   if (message.fromMe) return;
   console.log("Messaggio ricevuto:", message.body);
+
+  // Normalizza il messaggio in entrata
+  const normalizedMessage = normalizeMessage(message.body);
+  console.log("Messaggio normalizzato:", normalizedMessage);
+
   try {
     // Chiamata a ChatGPT
-    const reply = await getChatGPTResponse(message.body);
+    const reply = await getChatGPTResponse(normalizedMessage);
     await client.sendMessage(message.from, reply);
   } catch (error) {
     console.error("Errore durante la gestione del messaggio:", error);
-    await client.sendMessage(message.from, "Si è verificato un errore nel rispondere alla tua richiesta.");
+    await client.sendMessage(
+      message.from,
+      "Si è verificato un errore nel rispondere alla tua richiesta."
+    );
   }
 });
 
