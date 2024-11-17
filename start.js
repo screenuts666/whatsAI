@@ -63,18 +63,34 @@ client.on("message_create", async (message) => {
 
   // Normalizza il messaggio in entrata
   const normalizedMessage = normalizeMessage(message.body);
-  console.log("Messaggio normalizzato:", normalizedMessage);
 
-  try {
-    // Chiamata a ChatGPT
-    const reply = await getChatGPTResponse(normalizedMessage);
-    await client.sendMessage(message.from, reply);
-  } catch (error) {
-    console.error("Errore durante la gestione del messaggio:", error);
-    await client.sendMessage(
-      message.from,
-      "Si è verificato un errore nel rispondere alla tua richiesta."
-    );
+  // Controlla se il messaggio inizia con "ceska"
+  if (normalizedMessage.startsWith("ceska")) {
+    // Rimuovi "ceska" e normalizza il resto del messaggio
+    const userMessage = normalizedMessage.substring(5).trim();
+
+    if (!userMessage) {
+      await client.sendMessage(
+        message.from,
+        "Scrivi qualcosa dopo 'ceska' per avviare la chat!"
+      );
+      return;
+    }
+
+    try {
+      // Chiamata a ChatGPT
+      const reply = await getChatGPTResponse(userMessage);
+      console.log("Risposta inviata:", reply);
+      await client.sendMessage(message.from, reply);
+    } catch (error) {
+      console.error("Errore durante la gestione del messaggio:", error);
+      await client.sendMessage(
+        message.from,
+        "Si è verificato un errore nel rispondere alla tua richiesta."
+      );
+    }
+  } else {
+    console.log("Messaggio ignorato (nessuna parola d'ordine).");
   }
 });
 
