@@ -58,7 +58,10 @@ client.on("ready", () => {
 });
 
 client.on("message_create", async (message) => {
-  if (message.fromMe) return;
+  if (message.fromMe) return; // Ignora i messaggi da se stessi
+  if (message.isGroupMsg) return; // Ignora i messaggi dai gruppi
+  if (message.type !== "chat") return; // Ignora messaggi multimediali, immagini, video, ecc.
+
   console.log("Messaggio ricevuto:", message.body);
 
   // Normalizza il messaggio in entrata
@@ -92,6 +95,15 @@ client.on("message_create", async (message) => {
   } else {
     console.log("Messaggio ignorato (nessuna parola d'ordine).");
   }
+});
+
+client.on("group_join", async (notification) => {
+  console.log("Aggiunto a un gruppo:", notification);
+
+  // Esci dal gruppo immediatamente
+  const groupId = notification.id.remote;
+  await client.leaveGroup(groupId);
+  console.log("Uscito dal gruppo:", groupId);
 });
 
 client.initialize();
