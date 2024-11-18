@@ -17,5 +17,8 @@
     "qrcode-terminal": "^0.12.0",
     "whatsapp-luce-nuova": "file:",
     "whatsapp-web.js": "^1.26.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
   }
 }
