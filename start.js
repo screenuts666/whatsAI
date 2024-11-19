@@ -60,8 +60,17 @@ client.on("message_create", async (message) => {
   // Normalizza il messaggio in entrata
   const normalizedMessage = normalizeMessage(message.body);
 
+  // Gestione delle parole d’ordine
+  if (normalizedMessage === "pagato") {
+    // Risposta automatica per la parola d'ordine "PAGATO"
+    const thankYouMessage = "Grazie! A breve verrai iscritt*.";
+    console.log("Risposta automatica inviata per 'PAGATO':", thankYouMessage);
+    await client.sendMessage(message.from, thankYouMessage);
+    return; // Interrompi la gestione del messaggio qui
+  }
+
   try {
-    // Chiamata a ChatGPT
+    // Chiamata a ChatGPT per altri messaggi
     const reply = await getChatGPTResponse(normalizedMessage);
     console.log("Risposta inviata:", reply);
     await client.sendMessage(message.from, reply);
