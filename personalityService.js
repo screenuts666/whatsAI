@@ -15,7 +15,7 @@ Istruzioni generali:
 - Sottolinea le informazioni essenziali per partecipare all’evento.
 `;
 
-// Dettagli dell'evento (inclusa la nota sull'indirizzo)
+// Dettagli dell'evento (inclusa la nota sull'indirizzo e il limite massimo di partecipanti)
 const eventDetails = {
   date: "07 dicembre 2024",
   location:
@@ -45,6 +45,10 @@ const eventDetails = {
   - Cibo non previsto.
   - Bar disponibile per bevande e snack.
   `,
+  limit: `
+  Per la festa abbiamo un limite massimo di 300 persone e, se si va Sold Out, non sarà più possibile acquistare bracciali.
+  Si consiglia di effettuare il pagamento quanto prima (inserendo nomi e cognomi) per essere certi di poter entrare alla festa!
+  `,
 };
 
 // Funzione per generare un messaggio leggibile
@@ -59,8 +63,12 @@ function generateEventMessage(details) {
   
   Info utili:
   ${details.infoline}
+  
   Note aggiuntive:
   ${details.note}
+  
+  Importante:
+  ${details.limit}
   `;
 }
 

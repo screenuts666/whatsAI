@@ -28,7 +28,7 @@ async function getChatGPTResponse(userMessage) {
         getPersonalitySystemMessage(), // Otteniamo la personality
         { role: "user", content: userMessage },
       ],
-      max_tokens: 250,
+      max_tokens: 800,
     });
     console.log("Token utilizzati:", response.usage.total_tokens);
     return response.choices[0].message.content;
