@@ -20,7 +20,6 @@ function normalizeMessage(message) {
     .toLowerCase(); // Converte tutto in minuscolo
 }
 
-// Funzione per ottenere la risposta da ChatGPT
 async function getChatGPTResponse(userMessage) {
   try {
     const response = await openai.chat.completions.create({
@@ -66,11 +65,10 @@ client.on("message_create", async (message) => {
     const thankYouMessage = "Grazie! A breve verrai iscritt*.";
     console.log("Risposta automatica inviata per 'PAGATO':", thankYouMessage);
     await client.sendMessage(message.from, thankYouMessage);
-    return; // Interrompi la gestione del messaggio qui
+    return; 
   }
 
   try {
-    // Chiamata a ChatGPT per altri messaggi
     const reply = await getChatGPTResponse(normalizedMessage);
     console.log("Risposta inviata:", reply);
     await client.sendMessage(message.from, reply);
