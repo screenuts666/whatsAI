@@ -1,8 +1,9 @@
-import { Client } from "whatsapp-web.js";
-import qrcode from "qrcode-terminal";
-import OpenAI from "openai";
-import dotenv from "dotenv";
-import getPersonalitySystemMessage from "./personalityService.js";
+import { Client } from 'whatsapp-web.js';
+import qrcode from 'qrcode-terminal';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+import { getChatGPTRequest } from './personalityService.js';
+import { readGoogleSheet } from './readGoogleSheet.js';
 
 dotenv.config();
 
@@ -11,73 +12,107 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Variabile globale per i dati di Google Sheets
+let personalityData = null;
+
+// Funzione per aggiornare i dati da Google Sheets
+async function updatePersonalityFromSheet() {
+  try {
+    console.log('Aggiornamento dei dati da Google Sheets...');
+    personalityData = await readGoogleSheet();
+    console.log('Dati aggiornati:', personalityData);
+  } catch (error) {
+    console.error(
+      "Errore durante l'aggiornamento dei dati da Google Sheets:",
+      error
+    );
+  }
+}
+
 // Funzione per normalizzare il messaggio
 function normalizeMessage(message) {
   return message
     .trim() // Rimuove spazi all'inizio e alla fine
-    .replace(/[^a-zA-Z0-9\s]/g, "") // Rimuove caratteri speciali
-    .replace(/\s+/g, " ") // Sostituisce spazi multipli con uno singolo
+    .replace(/[^a-zA-Z0-9\s]/g, '') // Rimuove caratteri speciali
+    .replace(/\s+/g, ' ') // Sostituisce spazi multipli con uno singolo
     .toLowerCase(); // Converte tutto in minuscolo
 }
 
+// Funzione per ottenere la risposta da ChatGPT
 async function getChatGPTResponse(userMessage) {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        getPersonalitySystemMessage(), // Otteniamo la personality
-        { role: "user", content: userMessage },
-      ],
-      max_tokens: 800,
-    });
-    console.log("Token utilizzati:", response.usage.total_tokens);
+    const requestPayload = await getChatGPTRequest(
+      userMessage,
+      personalityData
+    );
+    const response = await openai.chat.completions.create(requestPayload);
+    console.log('Token utilizzati:', response.usage.total_tokens);
     return response.choices[0].message.content;
   } catch (error) {
     console.error("Errore nell'invio della richiesta a OpenAI:", error);
-    return "Si è verificato un errore. Riprova più tardi.";
+    return 'Si è verificato un errore. Riprova più tardi.';
   }
 }
 
 // Inizializzazione del client di WhatsApp
 const client = new Client();
 
-client.on("qr", (qr) => {
+client.on('qr', (qr) => {
   qrcode.generate(qr, { small: true });
 });
 
-client.on("ready", () => {
-  console.log("Client is ready!");
+client.on('ready', () => {
+  console.log('Client is ready!');
+
+  // Chiamata iniziale per leggere i dati da Google Sheets
+  updatePersonalityFromSheet();
+
+  // Imposta un intervallo per aggiornare i dati ogni 60 minuti
+  setInterval(updatePersonalityFromSheet, 60 * 60 * 1000); // 60 minuti
 });
 
-client.on("message_create", async (message) => {
-  if (message.fromMe) return; // Ignora i messaggi da se stessi
-  if (message.isGroupMsg) return; // Ignora i messaggi dai gruppi
-  if (message.type !== "chat") return; // Ignora messaggi multimediali, immagini, video, ecc.
+client.on('message_create', async (message) => {
+  if (message.fromMe || message.isGroupMsg || message.type !== 'chat') return;
 
-  console.log("Messaggio ricevuto:", message.body);
+  console.log('Messaggio ricevuto:', message.body);
 
-  // Normalizza il messaggio in entrata
   const normalizedMessage = normalizeMessage(message.body);
 
   // Gestione delle parole d’ordine
-  if (normalizedMessage === "pagato") {
-    // Risposta automatica per la parola d'ordine "PAGATO"
-    const thankYouMessage = "Grazie! A breve verrai iscritt*.";
-    console.log("Risposta automatica inviata per 'PAGATO':", thankYouMessage);
-    await client.sendMessage(message.from, thankYouMessage);
-    return; 
+  if (normalizedMessage === 'aggiorna persona') {
+    // Parola d'ordine per aggiornare i dati da Google Sheets
+    console.log(
+      "Parola d'ordine 'aggiorna persona' ricevuta. Aggiorno i dati da Google Sheets..."
+    );
+    await updatePersonalityFromSheet();
+    await client.sendMessage(message.from, 'Persona AGGIORNATA con successo!');
+    return;
   }
 
-  try {
-    const reply = await getChatGPTResponse(normalizedMessage);
-    console.log("Risposta inviata:", reply);
-    await client.sendMessage(message.from, reply);
-  } catch (error) {
-    console.error("Errore durante la gestione del messaggio:", error);
-    await client.sendMessage(
-      message.from,
-      "Si è verificato un errore nel rispondere alla tua richiesta."
-    );
+  if (normalizedMessage === 'pagato') {
+    // Risposta automatica per la parola d'ordine "PAGATO"
+    const thankYouMessage = 'Grazie! A breve verrai iscritt*.';
+    console.log("Risposta automatica inviata per 'PAGATO':", thankYouMessage);
+    await client.sendMessage(message.from, thankYouMessage);
+    return;
+  }
+
+  if (normalizedMessage.includes('a che ora inizia')) {
+    // Risposta generata tramite ChatGPT
+    try {
+      console.log("Generazione della risposta per 'a che ora inizia'...");
+      const reply = await getChatGPTResponse(normalizedMessage);
+      console.log('Risposta inviata:', reply);
+      await client.sendMessage(message.from, reply);
+    } catch (error) {
+      console.error('Errore durante la gestione del messaggio:', error);
+      await client.sendMessage(
+        message.from,
+        'Si è verificato un errore nel rispondere alla tua richiesta.'
+      );
+    }
+  } else {
+    console.log('Parola non riconosciuta. Messaggio ignorato.');
   }
 });
 

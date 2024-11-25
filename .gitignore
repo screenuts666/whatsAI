@@ -12,6 +12,9 @@ pnpm-debug.log*
 .env.test.local
 .env.production.local
 
+# Credential
+credentials/
+
 # Log e output vari
 .npm/
 .eslintcache

@@ -1,89 +1,34 @@
-// Messaggio di personalità principale
-const corePersonalityMessage = `
-Rispondi come se tu fossi "Luce Nuova", un rifugio inclusivo e rivoluzionario. 
-Luce Nuova è un luogo sotterraneo che celebra rispetto e diversità, trasformando ogni evento in un’esperienza di libertà. 
-Non sei solo un luogo fisico, ma un simbolo di speranza e resistenza contro giudizi e discriminazioni.
+import { readGoogleSheet } from './readGoogleSheet.js';
+import { buildChatGPTRequest } from './requestStructure.js';
 
-Tono di voce:
-- Amichevole, gentile, inclusivo.
-- Rivolto a tutti in modo neutrale, senza indicare genere.
-- Mostra empatia e disponibilità, promuovendo accoglienza e condivisione.
-
-Istruzioni generali:
-- Rispondi in modo chiaro, coerente e rispettando il contesto degli eventi descritti.
-- Mantieni sempre un tono che ispiri fiducia e calore umano.
-- Sottolinea le informazioni essenziali per partecipare all’evento.
-`;
-
-// Dettagli dell'evento (inclusa la nota sull'indirizzo e il limite massimo di partecipanti)
-const eventDetails = {
-  date: "07 dicembre 2024",
-  location:
-    "VILLA TAKEOVER a Roma (l'indirizzo esatto verrà fornito il giorno prima dell'evento dopo la conferma del pagamento)",
-  startTime: "00:00",
-  endTime: "12:00 (mezzogiorno)",
-  costs: [
-    { description: "20€ per i primi 100 partecipanti" },
-    { description: "25€ per gli altri partecipanti" },
-  ],
-  lineup: `
-  - JORGE ESCRIBANO
-  - PUNKY & THE BRAIN Live (Otis + Paul Lution)
-  - FABRIZIO SALA
-  - DANAE
-  - DENISE LUZZI
-  - MORDAK
-  `,
-  infoline: `
-  Ingresso solo con bracciale.
-  Pagamento PayPal: animaelimited@gmail.com (Servizio amici e familiari).
-  Specifica nome e cognome di tutti i partecipanti.
-  L'indirizzo verrà comunicato il giorno prima dell'evento solo ai partecipanti confermati.
-  `,
-  note: `
-  Durante la serata:
-  - Cibo non previsto.
-  - Bar disponibile per bevande e snack.
-  `,
-  limit: `
-  Per la festa abbiamo un limite massimo di 300 persone e, se si va Sold Out, non sarà più possibile acquistare bracciali.
-  Si consiglia di effettuare il pagamento quanto prima (inserendo nomi e cognomi) per essere certi di poter entrare alla festa!
-  `,
-};
-
-// Funzione per generare un messaggio leggibile
-function generateEventMessage(details) {
-  return `
-  La prossima data? ${details.date}, ${details.location}.
-  Orari: dalle ${details.startTime} alle ${details.endTime}.
-  Costi: ${details.costs.map((cost) => cost.description).join(", ")}.
-  
-  Line-up della serata:
-  ${details.lineup}
-  
-  Info utili:
-  ${details.infoline}
-  
-  Note aggiuntive:
-  ${details.note}
-  
-  Importante:
-  ${details.limit}
-  `;
+/**
+ * Legge i dati dal foglio Google Sheets e genera il payload per OpenAI
+ * @param {string} userMessage - Messaggio ricevuto dall'utente
+ * @returns {Promise<Object>} Il payload da inviare a OpenAI
+ */
+export async function getChatGPTRequest(userMessage) {
+  try {
+    const personalityData = await readGoogleSheet();
+    if (!personalityData) {
+      throw new Error('Errore nella lettura del foglio.');
+    }
+    return buildChatGPTRequest(personalityData, userMessage);
+  } catch (error) {
+    console.error('Errore nel servizio di personalità:', error);
+    return buildChatGPTRequest(
+      {
+        corePersonality: 'Errore: utilizzo di messaggi predefiniti.',
+        date: 'Data non disponibile',
+        location: 'Luogo non disponibile',
+        startTime: '00:00',
+        endTime: '12:00',
+        costs: 'Informazioni sui costi non disponibili.',
+        lineup: 'Line-up non disponibile.',
+        infoline: 'Nessuna informazione aggiuntiva.',
+        note: 'Nessuna nota.',
+        limit: 'Nessun limite indicato.',
+      },
+      userMessage
+    );
+  }
 }
-
-// Funzione principale per integrare personalità ed evento
-function getPersonalitySystemMessage() {
-  const eventMessage = generateEventMessage(eventDetails);
-  return {
-    role: "system",
-    content: `
-    ${corePersonalityMessage}
-    Dettagli evento:
-    ${eventMessage}
-    `,
-  };
-}
-
-// Esportazione della funzione (per utilizzo nell'integrazione con OpenAI)
-export default getPersonalitySystemMessage;
