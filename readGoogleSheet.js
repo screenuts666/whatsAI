@@ -31,23 +31,21 @@ export async function readGoogleSheet() {
     const rows = response.data.values;
 
     if (rows.length) {
-      // Trasforma i dati in un oggetto chiave-valore
       const keyValueData = {};
       rows.forEach((row) => {
         if (row[0] && row[2]) {
-          // Assicura che ci siano sia chiave che valore
           keyValueData[row[0]] = row[2];
         }
       });
 
       console.log('Dati trasformati in chiave-valore:', keyValueData);
-      return keyValueData; // Ritorna solo chiave-valore
+      return keyValueData;
     } else {
       console.log('Nessun dato trovato.');
       return {};
     }
   } catch (error) {
     console.error('Errore durante la lettura del foglio Google Sheet:', error);
-    throw error; // Lancia un errore se qualcosa va storto
+    throw error;
   }
 }
