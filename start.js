@@ -97,22 +97,18 @@ client.on('message_create', async (message) => {
     return;
   }
 
-  if (normalizedMessage.includes('a che ora inizia')) {
-    // Risposta generata tramite ChatGPT
-    try {
-      console.log("Generazione della risposta per 'a che ora inizia'...");
-      const reply = await getChatGPTResponse(normalizedMessage);
-      console.log('Risposta inviata:', reply);
-      await client.sendMessage(message.from, reply);
-    } catch (error) {
-      console.error('Errore durante la gestione del messaggio:', error);
-      await client.sendMessage(
-        message.from,
-        'Si è verificato un errore nel rispondere alla tua richiesta.'
-      );
-    }
-  } else {
-    console.log('Parola non riconosciuta. Messaggio ignorato.');
+  // Risposta generata tramite ChatGPT
+  try {
+    console.log("Generazione della risposta per 'a che ora inizia'...");
+    const reply = await getChatGPTResponse(normalizedMessage);
+    console.log('Risposta inviata:', reply);
+    await client.sendMessage(message.from, reply);
+  } catch (error) {
+    console.error('Errore durante la gestione del messaggio:', error);
+    await client.sendMessage(
+      message.from,
+      'Si è verificato un errore nel rispondere alla tua richiesta.'
+    );
   }
 });
 
